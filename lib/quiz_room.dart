@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:quiz_race/quiz_controller.dart';
 import 'package:quiz_race/quiz_repository.dart';
 import 'package:quiz_race/quiz_result.dart';
 
@@ -79,7 +81,6 @@ class _QuizPageState extends State<QuizPage> {
   String quizId = '';
 
   int gameLimitTime = 5;
-  int leftSeconds = 5;
 
   final repo = QuizRepository();
 
@@ -92,13 +93,16 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final quizController = Get.put(QuizController());
+
     return Center(
         child: Column(
       children: [
         Spacer(),
         Text(question),
         Expanded(
-          child: Text(leftSeconds.toString()),
+          child: Obx(() => Text('${quizController.leftSeconds}')),
         ),
         ChoiceButtons(
           choices,
@@ -121,9 +125,12 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   onTimeChange(Timer timer) {
+    final QuizController controller = Get.find();
+
     setState(() {
-      leftSeconds = gameLimitTime - timer.tick;
-      if (leftSeconds == 0) {
+      controller.setLeftSeconds(gameLimitTime - timer.tick);
+
+      if (controller.leftSeconds.value == 0) {
         timer.cancel();
         checkAnswer();
       }
