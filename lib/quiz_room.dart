@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:quiz_race/quiz_controller.dart';
 import 'package:quiz_race/quiz_repository.dart';
 import 'package:quiz_race/quiz_result.dart';
 
@@ -32,7 +34,7 @@ class _QuizRoomState extends State<QuizRoom> {
                   },
                 ));
               },
-              onFinish: () {
+              onFinished: () {
                 Navigator.push(context, MaterialPageRoute(
                   builder: (context) {
                     return QuizResultPage(score);
@@ -51,17 +53,21 @@ class _QuizRoomState extends State<QuizRoom> {
 }
 
 class QuizPage extends StatefulWidget {
-  String quizId;
-  VoidCallback onCorrect;
-  VoidCallback onIncorrect;
-  VoidCallback onFinish;
 
   QuizPage({
     required this.quizId,
     required this.onCorrect,
     required this.onIncorrect,
-    required this.onFinish,
+    required this.onFinished,
   });
+
+  final String quizId;
+
+  final VoidCallback onCorrect;
+
+  final VoidCallback onIncorrect;
+
+  final VoidCallback onFinished;
 
   @override
   _QuizPageState createState() => _QuizPageState();
@@ -75,7 +81,6 @@ class _QuizPageState extends State<QuizPage> {
   String quizId = '';
 
   int gameLimitTime = 5;
-  int leftSeconds = 5;
 
   final repo = QuizRepository();
 
@@ -88,17 +93,20 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final quizController = Get.put(QuizController());
+
     return Center(
         child: Column(
       children: [
         Spacer(),
         Text(question),
         Expanded(
-          child: Text(leftSeconds.toString()),
+          child: Obx(() => Text('${quizController.leftSeconds}')),
         ),
         ChoiceButtons(
           choices,
-          onSelect: (answer) {
+          onSelected: (answer) {
             selectedAnswer = answer;
           },
         ),
@@ -117,9 +125,12 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   onTimeChange(Timer timer) {
+    final QuizController controller = Get.find();
+
     setState(() {
-      leftSeconds = gameLimitTime - timer.tick;
-      if (leftSeconds == 0) {
+      controller.setLeftSeconds(gameLimitTime - timer.tick);
+
+      if (controller.leftSeconds.value == 0) {
         timer.cancel();
         checkAnswer();
       }
@@ -142,15 +153,20 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   quitGame() {
-    widget.onFinish();
+    widget.onFinished();
   }
 }
 
 class ChoiceButtons extends StatelessWidget {
-  List<String> choices;
-  ValueChanged<String> onSelect;
 
-  ChoiceButtons(this.choices, {required this.onSelect});
+  ChoiceButtons(
+    this.choices, {
+    required this.onSelected,
+  });
+
+  final List<String> choices;
+
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -162,15 +178,15 @@ class ChoiceButtons extends StatelessWidget {
             Expanded(
                 child: SingleChoice(
               text: choices[0],
-              onSelect: () {
-                onSelect(choices[0]);
+              onSelected: () {
+                onSelected(choices[0]);
               },
             )),
             Expanded(
                 child: SingleChoice(
               text: choices[1],
-              onSelect: () {
-                onSelect(choices[1]);
+              onSelected: () {
+                onSelected(choices[1]);
               },
             )),
           ],
@@ -181,16 +197,16 @@ class ChoiceButtons extends StatelessWidget {
             Expanded(
               child: SingleChoice(
                 text: choices[2],
-                onSelect: () {
-                  onSelect(choices[2]);
+                onSelected: () {
+                  onSelected(choices[2]);
                 },
               ),
             ),
             Expanded(
                 child: SingleChoice(
               text: choices[3],
-              onSelect: () {
-                onSelect(choices[2]);
+              onSelected: () {
+                onSelected(choices[2]);
               },
             )),
           ],
@@ -201,17 +217,22 @@ class ChoiceButtons extends StatelessWidget {
 }
 
 class SingleChoice extends StatelessWidget {
-  String text = '';
-  VoidCallback onSelect;
 
-  SingleChoice({required this.text, required this.onSelect});
+  SingleChoice({
+    required this.text,
+    required this.onSelected,
+  });
+
+  final String text;
+
+  final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: OutlinedButton(
-        onPressed: onSelect,
+        onPressed: onSelected,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(text),
