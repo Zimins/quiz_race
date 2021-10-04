@@ -1,0 +1,4 @@
+{
+    "image": "cirrusci/flutter:2.5.1",
+    "forwardPorts": [3000]
+}
